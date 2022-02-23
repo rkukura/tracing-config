@@ -1,0 +1,42 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: jaeger
+  namespace: tracing-system
+spec:
+  strategy: production
+  resources:
+    limits:
+      cpu: 100m
+      memory: 100Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+  collector:
+    strategy:
+      type: RollingUpdate
+  query:
+    strategy:
+      type: RollingUpdate
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        max-span-age: 168h # should match numberOfDays*24
+    esIndexCleaner:
+      enabled: true
+      numberOfDays: 7
+      schedule: "55 23 * * *"
+    elasticsearch:
+      nodeCount: 1  # Change to 3 for production
+      redundancyPolicy: ZeroRedundancy  # Change to SingleRedundancy for production
+      storage:
+        storageClassname: gp2
+        size: 2Gi  # Increase for production
+      resources:
+        limits:
+          cpu: 800m
+          memory: 4Gi
+        requests:
+          cpu: 400m
+          memory: 3Gi
