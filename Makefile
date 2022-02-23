@@ -26,7 +26,7 @@ stop-vertx-create-span:
 .PHONY: app-namespace
 app-namespace:
 	oc new-project $(APP_NS) 2>&1 | grep -v "already exists" || true
-	oc apply -f otelcol-sidecar.yaml
+	oc apply -n $(APP_NS) -f otelcol-sidecar.yaml
 
 .PHONY: clean
 clean:
