@@ -1,4 +1,10 @@
 
+.PHONY: otelcol-local
+otelcol-local: jaeger
+	oc apply -f otelcol-local.yaml
+	sleep 5
+	oc annotate -n tracing-system --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
+
 .PHONY: jaeger
 jaeger: namespace
 	oc apply -f jaeger.yaml
