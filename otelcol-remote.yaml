@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otelcol-cabundle
+  namespace: tracing-system
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: otelcol
+  namespace: tracing-system
+spec:
+  mode: deployment
+  volumeMounts:
+  - name: cabundle-volume
+    mountPath: /etc/pki/ca-trust/source/service-ca
+    readonly: true
+  - name: tls-config-volume
+    mountPath: /etc/tls-config
+    readonly: true
+  - name: remote-ca-volume
+    mountPath: /etc/remote-tls-config
+    readonly: true
+  volumes:
+  - name: cabundle-volume
+    configMap:
+      name: otelcol-cabundle
+  - name: tls-config-volume
+    secret:
+      secretName: otelcol-collector-headless-tls
+  - name: remote-ca-volume
+    configMap:
+      name: remote-ca
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+  config: |
+    extensions:
+      memory_ballast:
+        size_in_percentage: 30
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+            tls:
+              cert_file: /etc/tls-config/tls.crt
+              key_file: /etc/tls-config/tls.key
+          http:  # probably not needed
+            endpoint: 0.0.0.0:4318
+            tls:
+              cert_file: /etc/tls-config/tls.crt
+              key_file: /etc/tls-config/tls.key
+    processors:
+      batch:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+    exporters:
+      otlp:
+        endpoint: otlp.apps.observability-d.p3ao.p1.openshiftapps.com:443
+        tls:
+          ca_file: "/etc/remote-tls-config/otlp-cert.crt"
+    service:
+      extensions: [memory_ballast]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp]
