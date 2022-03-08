@@ -34,8 +34,15 @@ spec:
     requests:
       cpu: 50m
       memory: 50Mi
+  # image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.43.0
+  image: docker.io/otel/opentelemetry-collector-contrib:0.43.0
   config: |
     extensions:
+      basicauth:
+        htpasswd:
+          inline: |
+            # bob:$apr1$7zMY38eq$XsLF1pq.l3pqrsBHnpQTE0
+            bob:abc123
       memory_ballast:
         size_in_percentage: 30
     receivers:
@@ -46,6 +53,8 @@ spec:
             tls:
               cert_file: /etc/tls-config/tls.crt
               key_file: /etc/tls-config/tls.key
+            auth:
+              authenticator: basicauth
           http:  # probably not needed
             endpoint: 0.0.0.0:4318
             tls:
@@ -63,7 +72,7 @@ spec:
         tls:
           ca_file: "/etc/pki/ca-trust/source/service-ca/service-ca.crt"
     service:
-      extensions: [memory_ballast]
+      extensions: [memory_ballast, basicauth]
       pipelines:
         traces:
           receivers: [otlp]

@@ -68,6 +68,8 @@ spec:
         endpoint: otlp.apps.observability-d.p3ao.p1.openshiftapps.com:443
         tls:
           ca_file: "/etc/remote-tls-config/otlp-cert.crt"
+        headers:
+          Authorization: "Basic Ym9iOmFiYzEyMw=="
     service:
       extensions: [memory_ballast]
       pipelines:
