@@ -16,7 +16,7 @@ otelcol-local: jaeger
 
 .PHONY: otlp-route
 otlp-route: otelcol-local
-	oc create route reencrypt -n tracing-system --service=otelcol-collector --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --dest-ca-cert=dest-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	oc create route reencrypt -n tracing-system --service=otelcol-collector --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --dest-ca-cert=dest-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
 
 .PHONY: jaeger
 jaeger: namespace

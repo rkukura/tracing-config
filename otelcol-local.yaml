@@ -53,13 +53,15 @@ spec:
             tls:
               cert_file: /etc/tls-config/tls.crt
               key_file: /etc/tls-config/tls.key
-            auth:
-              authenticator: basicauth
-          http:  # probably not needed
-            endpoint: 0.0.0.0:4318
+      otlp/auth:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:44317
             tls:
               cert_file: /etc/tls-config/tls.crt
               key_file: /etc/tls-config/tls.key
+            auth:
+              authenticator: basicauth
     processors:
       batch:
       memory_limiter:
@@ -75,6 +77,6 @@ spec:
       extensions: [memory_ballast, basicauth]
       pipelines:
         traces:
-          receivers: [otlp]
+          receivers: [otlp, otlp/auth]
           processors: [memory_limiter, batch]
           exporters: [jaeger]
