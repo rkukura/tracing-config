@@ -3,7 +3,7 @@ APP_NS ?= traced-apps
 
 .PHONY: otelcol-remote
 otelcol-remote: namespace
-	oc create configmap -n tracing-system remote-ca --from-file=otlp-cert.crt 
+	# oc create configmap -n tracing-system remote-ca --from-file=otlp-cert.crt 
 	oc apply -f otelcol-remote.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
@@ -16,7 +16,8 @@ otelcol-local: jaeger
 
 .PHONY: otlp-route
 otlp-route: otelcol-local
-	oc create route reencrypt -n tracing-system --service=otelcol-collector --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --dest-ca-cert=dest-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	# oc create route reencrypt -n tracing-system --service=otelcol-collector-headless --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	oc create route reencrypt -n tracing-system --service=otelcol-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
 
 .PHONY: jaeger
 jaeger: namespace
