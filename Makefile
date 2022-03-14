@@ -10,6 +10,7 @@ otelcol-remote: namespace
 
 .PHONY: otelcol-local
 otelcol-local: jaeger
+	oc create secret generic -n tracing-system otlp-htpasswd --from-file=otlp-htpasswd
 	oc apply -f otelcol-local.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls

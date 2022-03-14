@@ -69,7 +69,8 @@ spec:
         tls:
           # ca_file: "/etc/remote-tls-config/otlp-cert.crt"
         headers:
-          Authorization: "Basic Ym9iOmFiYzEyMw=="
+          Authorization: "Basic Ym9iOmFiYzEyMw=="  # bob
+          # Authorization: "Basic c3RlbGxhOmRlZjQ1Ng=="  # stella
     service:
       extensions: [memory_ballast]
       pipelines:

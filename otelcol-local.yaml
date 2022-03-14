@@ -20,6 +20,9 @@ spec:
   - name: tls-config-volume
     mountPath: /etc/tls-config
     readonly: true
+  - name: otlp-htpasswd-volume
+    mountPath: /etc/otlp
+    readonly: true
   volumes:
   - name: cabundle-volume
     configMap:
@@ -27,6 +30,9 @@ spec:
   - name: tls-config-volume
     secret:
       secretName: otelcol-collector-headless-tls
+  - name: otlp-htpasswd-volume
+    secret:
+      secretName: otlp-htpasswd
   resources:
     limits:
       cpu: 100m
@@ -40,9 +46,7 @@ spec:
     extensions:
       basicauth:
         htpasswd:
-          inline: |
-            # bob:$apr1$7zMY38eq$XsLF1pq.l3pqrsBHnpQTE0
-            bob:abc123
+          file: /etc/otlp/otlp-htpasswd
       memory_ballast:
         size_in_percentage: 30
     receivers:
