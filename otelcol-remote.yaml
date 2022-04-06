@@ -20,9 +20,9 @@ spec:
   - name: tls-config-volume
     mountPath: /etc/tls-config
     readonly: true
-  # - name: remote-ca-volume
-  #   mountPath: /etc/remote-tls-config
-  #   readonly: true
+  - name: remote-ca-volume
+    mountPath: /etc/remote-tls-config
+    readonly: true
   volumes:
   - name: cabundle-volume
     configMap:
@@ -30,9 +30,9 @@ spec:
   - name: tls-config-volume
     secret:
       secretName: otelcol-collector-headless-tls
-  # - name: remote-ca-volume
-  #   configMap:
-  #     name: remote-ca
+  - name: remote-ca-volume
+    configMap:
+      name: remote-ca
   resources:
     limits:
       cpu: 100m
@@ -52,11 +52,6 @@ spec:
             tls:
               cert_file: /etc/tls-config/tls.crt
               key_file: /etc/tls-config/tls.key
-          http:  # probably not needed
-            endpoint: 0.0.0.0:4318
-            tls:
-              cert_file: /etc/tls-config/tls.crt
-              key_file: /etc/tls-config/tls.key
     processors:
       batch:
       memory_limiter:
@@ -67,7 +62,7 @@ spec:
       otlp:
         endpoint: otlp.apps.observability-d.p3ao.p1.openshiftapps.com:443
         tls:
-          # ca_file: "/etc/remote-tls-config/otlp-cert.crt"
+          ca_file: "/etc/remote-tls-config/otlp-cert.crt"
         headers:
           Authorization: "Basic Ym9iOmFiYzEyMw=="  # bob
           # Authorization: "Basic c3RlbGxhOmRlZjQ1Ng=="  # stella
