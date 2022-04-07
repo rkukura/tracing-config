@@ -8,16 +8,36 @@ otelcol-remote: namespace
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
 
-.PHONY: otelcol-local
-otelcol-local: jaeger
-	oc create secret generic -n tracing-system otlp-htpasswd --from-file=otlp-htpasswd
-	oc apply -f otelcol-local.yaml
+.PHONY: otelcol-local-reencrypt
+otelcol-local-reencrypt: jaeger otlp-htpasswd-secret
+	oc apply -f otelcol-local-reencrypt.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
 
-.PHONY: otlp-route
-otlp-route: otelcol-local
-	oc create route reencrypt -n tracing-system --service=otelcol-collector-headless --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+.PHONY: otelcol-local-passthrough
+otelcol-local-passthrough: jaeger otlp-htpasswd-secret otlp-cert-secret
+	oc apply -f otelcol-local-passthrough.yaml
+	sleep 5
+	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
+
+.PHONY: otlp-htpasswd-secret
+otlp-htpasswd-secret:
+	# Use kubernetes.io/basic-auth type?
+	oc create secret generic -n tracing-system otlp-htpasswd --from-file=otlp-htpasswd 2>&1 | grep -v "already exists" || true
+
+.PHONY: otlp-cert-secret
+otlp-cert-secret:
+	oc create secret tls -n tracing-system otlp-cert --cert=otlp-cert.crt --key=otlp-cert.key 2>&1 | grep -v "already exists" || true
+
+.PHONY: otlp-route-reencrypt
+otlp-route-reencrypt: otelcol-local-reencrypt
+	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true otelcol-collector-headless
+	oc create route reencrypt -n $(SYSTEM_NS) --service=otelcol-collector-headless --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+
+.PHONY: otlp-route-passthrough
+otlp-route-passthrough: otelcol-local-passthrough
+	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true otelcol-collector-headless
+	oc create route passthrough -n $(SYSTEM_NS) --service=otelcol-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
 
 .PHONY: jaeger
 jaeger: namespace
