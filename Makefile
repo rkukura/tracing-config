@@ -66,5 +66,5 @@ otlp-cert:
 
 .PHONY: clean
 clean:
-	oc delete project $(SYSTEM_NS)
-	oc delete project $(APP_NS)
+	oc delete project --ignore-not-found=true $(SYSTEM_NS) 2>&1 | grep -v "forbidden" || true
+	oc delete project --ignore-not-found=true $(APP_NS) 2>&1 | grep -v "forbidden" || true
