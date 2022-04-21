@@ -72,6 +72,11 @@ spec:
             auth:
               authenticator: basicauth
     processors:
+      attributes:
+        actions:
+          - key: k8s.cluster.name
+            action: insert
+            value: MyServerClusterName
       batch:
       memory_limiter:
         check_interval: 1s
@@ -87,5 +92,5 @@ spec:
       pipelines:
         traces:
           receivers: [otlp, otlp/auth]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter, attributes, batch]
           exporters: [jaeger]

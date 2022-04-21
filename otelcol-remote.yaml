@@ -53,6 +53,11 @@ spec:
               cert_file: /etc/tls-config/tls.crt
               key_file: /etc/tls-config/tls.key
     processors:
+      attributes:
+        actions:
+          - key: k8s.cluster.name
+            action: insert
+            value: SomeClientClusterName
       batch:
       memory_limiter:
         check_interval: 1s
@@ -71,5 +76,5 @@ spec:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter, attributes, batch]
           exporters: [otlp]
