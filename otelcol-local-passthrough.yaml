@@ -77,6 +77,12 @@ spec:
           - key: k8s.cluster.name
             action: insert
             value: MyServerClusterName
+      attributes/auth:
+        actions:
+          - key: telemetry_client_id
+            action: upsert
+            # from_context: Auth.username
+            value: SomeUsername  # temporary
       batch:
       memory_limiter:
         check_interval: 1s
@@ -91,6 +97,10 @@ spec:
       extensions: [memory_ballast, basicauth]
       pipelines:
         traces:
-          receivers: [otlp, otlp/auth]
+          receivers: [otlp]
           processors: [memory_limiter, attributes, batch]
+          exporters: [jaeger]
+        traces/auth:
+          receivers: [otlp/auth]
+          processors: [memory_limiter, attributes/auth, batch]
           exporters: [jaeger]
