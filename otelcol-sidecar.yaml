@@ -56,6 +56,6 @@ spec:
       extensions: [memory_ballast]
       pipelines:
         traces:
-          receivers: [otlp,jaeger]
+          receivers: [otlp, jaeger]
           processors: [memory_limiter, batch]
           exporters: [otlp]
