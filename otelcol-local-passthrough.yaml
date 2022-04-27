@@ -81,7 +81,7 @@ spec:
         actions:
           - key: telemetry_client_id
             action: upsert
-            # from_context: Auth.username
+            # from_context: auth.username
             value: SomeUsername  # temporary
       batch:
       memory_limiter:
