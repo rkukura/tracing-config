@@ -38,6 +38,8 @@ otlp-route-reencrypt: otelcol-local-reencrypt
 otlp-route-passthrough: otelcol-local-passthrough
 	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true otelcol-collector-headless
 	oc create route passthrough -n $(SYSTEM_NS) --service=otelcol-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/otelcol-collector-headless haproxy.router.openshift.io/balance=random
+	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/otelcol-collector-headless haproxy.router.openshift.io/disable_cookies=true
 
 .PHONY: jaeger
 jaeger: namespace
