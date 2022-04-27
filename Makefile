@@ -6,19 +6,19 @@ otelcol-remote: namespace
 	oc create configmap -n tracing-system remote-ca --from-file=otlp-cert.crt 2>&1 | grep -v "already exists" || true
 	oc apply -f otelcol-remote.yaml
 	sleep 5
-	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
+	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
 .PHONY: otelcol-local-reencrypt
 otelcol-local-reencrypt: jaeger otlp-htpasswd-secret
 	oc apply -f otelcol-local-reencrypt.yaml
 	sleep 5
-	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
+	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
 .PHONY: otelcol-local-passthrough
 otelcol-local-passthrough: jaeger otlp-htpasswd-secret otlp-cert-secret
 	oc apply -f otelcol-local-passthrough.yaml
 	sleep 5
-	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
+	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
 .PHONY: otlp-htpasswd-secret
 otlp-htpasswd-secret:
@@ -31,15 +31,15 @@ otlp-cert-secret:
 
 .PHONY: otlp-route-reencrypt
 otlp-route-reencrypt: otelcol-local-reencrypt
-	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true otelcol-collector-headless
-	oc create route reencrypt -n $(SYSTEM_NS) --service=otelcol-collector-headless --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true gateway-collector-headless
+	oc create route reencrypt -n $(SYSTEM_NS) --service=gateway-collector-headless --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
 
 .PHONY: otlp-route-passthrough
 otlp-route-passthrough: otelcol-local-passthrough
-	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true otelcol-collector-headless
-	oc create route passthrough -n $(SYSTEM_NS) --service=otelcol-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
-	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/otelcol-collector-headless haproxy.router.openshift.io/balance=random
-	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/otelcol-collector-headless haproxy.router.openshift.io/disable_cookies=true
+	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true gateway-collector-headless
+	oc create route passthrough -n $(SYSTEM_NS) --service=gateway-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/balance=random
+	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/disable_cookies=true
 
 .PHONY: jaeger
 jaeger: namespace

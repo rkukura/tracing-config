@@ -1,7 +1,7 @@
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
 metadata:
-  name: tracing-sidecar
+  name: sidecar-agent
 spec:
   mode: sidecar
   volumeMounts:
@@ -42,7 +42,7 @@ spec:
         spike_limit_percentage: 25
     exporters:
       otlp:
-        endpoint: otelcol-collector-headless.tracing-system.svc:4317
+        endpoint: gateway-collector-headless.tracing-system.svc:4317
         tls:
           ca_file: "/etc/pki/ca-trust/source/service-ca/service-ca.crt"
     service:

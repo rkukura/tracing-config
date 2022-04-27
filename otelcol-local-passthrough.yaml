@@ -1,7 +1,7 @@
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
 metadata:
-  name: otelcol
+  name: gateway
   namespace: tracing-system
 spec:
   mode: deployment
@@ -24,7 +24,7 @@ spec:
       name: openshift-service-ca.crt
   - name: tls-config-volume
     secret:
-      secretName: otelcol-collector-headless-tls
+      secretName: gateway-collector-headless-tls
   - name: otlp-htpasswd-volume
     secret:
       secretName: otlp-htpasswd
