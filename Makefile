@@ -1,24 +1,22 @@
 SYSTEM_NS = tracing-system
 APP_NS ?= traced-apps
 
-.PHONY: otelcol-remote
-otelcol-remote: namespace
+.PHONY: client-gateway
+client-gateway: namespace
 	oc create configmap -n tracing-system remote-ca --from-file=otlp-cert.crt 2>&1 | grep -v "already exists" || true
-	oc apply -f otelcol-remote.yaml
+	oc apply -f client-gateway.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
-.PHONY: otelcol-local-reencrypt
-otelcol-local-reencrypt: jaeger otlp-htpasswd-secret
-	oc apply -f otelcol-local-reencrypt.yaml
+.PHONY: server-gateway
+server-gateway: jaeger otlp-htpasswd-secret otlp-cert-secret
+	oc apply -f server-gateway.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
-
-.PHONY: otelcol-local-passthrough
-otelcol-local-passthrough: jaeger otlp-htpasswd-secret otlp-cert-secret
-	oc apply -f otelcol-local-passthrough.yaml
-	sleep 5
-	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
+	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true gateway-collector-headless
+	oc create route passthrough -n $(SYSTEM_NS) --service=gateway-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
+	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/balance=random
+	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/disable_cookies=true
 
 .PHONY: otlp-htpasswd-secret
 otlp-htpasswd-secret:
@@ -28,18 +26,6 @@ otlp-htpasswd-secret:
 .PHONY: otlp-cert-secret
 otlp-cert-secret:
 	oc create secret tls -n tracing-system otlp-cert --cert=otlp-cert.crt --key=otlp-cert.key 2>&1 | grep -v "already exists" || true
-
-.PHONY: otlp-route-reencrypt
-otlp-route-reencrypt: otelcol-local-reencrypt
-	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true gateway-collector-headless
-	oc create route reencrypt -n $(SYSTEM_NS) --service=gateway-collector-headless --port=otlp-auth-grpc --cert=otlp-cert.crt --key=otlp-cert.key --ca-cert=otlp-cert.crt --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
-
-.PHONY: otlp-route-passthrough
-otlp-route-passthrough: otelcol-local-passthrough
-	oc delete route -n $(SYSTEM_NS) --ignore-not-found=true gateway-collector-headless
-	oc create route passthrough -n $(SYSTEM_NS) --service=gateway-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
-	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/balance=random
-	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/disable_cookies=true
 
 .PHONY: jaeger
 jaeger: namespace
@@ -60,7 +46,7 @@ stop-vertx-create-span:
 .PHONY: app-namespace
 app-namespace:
 	oc new-project $(APP_NS) 2>&1 | grep -v "already exists" || true
-	oc apply -n $(APP_NS) -f otelcol-sidecar.yaml
+	oc apply -n $(APP_NS) -f sidecar-agent.yaml
 
 .PHONY: otlp-cert
 otlp-cert:
