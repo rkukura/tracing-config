@@ -5,8 +5,8 @@ APP_NS ?= traced-apps
 otelcol-remote: namespace
 	oc create configmap -n tracing-system remote-ca --from-file=otlp-cert.crt 2>&1 | grep -v "already exists" || true
 	oc apply -f otelcol-remote.yaml
-	# sleep 5
-	# oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
+	sleep 5
+	oc annotate -n $(SYSTEM_NS) --overwrite=true service/otelcol-collector-headless service.beta.openshift.io/serving-cert-secret-name=otelcol-collector-headless-tls
 
 .PHONY: otelcol-local-reencrypt
 otelcol-local-reencrypt: jaeger otlp-htpasswd-secret
