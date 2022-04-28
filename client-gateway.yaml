@@ -9,16 +9,16 @@ spec:
   - name: tls-config-volume
     mountPath: /etc/tls-config
     readonly: true
-  - name: remote-ca-volume
-    mountPath: /etc/remote-tls-config
+  - name: otlp-ca-volume
+    mountPath: /otlp-ca
     readonly: true
   volumes:
   - name: tls-config-volume
     secret:
       secretName: gateway-collector-headless-tls
-  - name: remote-ca-volume
+  - name: otlp-ca-volume
     configMap:
-      name: remote-ca
+      name: gateway-collector-otlp-ca
   resources:
     limits:
       cpu: 100m
@@ -53,7 +53,7 @@ spec:
       otlp:
         endpoint: otlp.apps.observability-d.p3ao.p1.openshiftapps.com:443
         tls:
-          ca_file: "/etc/remote-tls-config/otlp-cert.crt"
+          ca_file: otlp-ca/ca.crt
         headers:
           Authorization: "Basic Ym9iOmFiYzEyMw=="  # bob
           # Authorization: "Basic c3RlbGxhOmRlZjQ1Ng=="  # stella
