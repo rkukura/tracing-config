@@ -9,8 +9,8 @@ spec:
   - name: cabundle-volume
     mountPath: /cabundle
     readonly: true
-  - name: tls-config-volume
-    mountPath: /etc/tls-config
+  - name: headless-tls-volume
+    mountPath: /headless-tls
     readonly: true
   - name: basicauth-volume
     mountPath: /basicauth
@@ -22,7 +22,7 @@ spec:
   - name: cabundle-volume
     configMap:
       name: openshift-service-ca.crt
-  - name: tls-config-volume
+  - name: headless-tls-volume
     secret:
       secretName: gateway-collector-headless-tls
   - name: basicauth-volume
@@ -52,8 +52,8 @@ spec:
           grpc:
             endpoint: 0.0.0.0:4317
             tls:
-              cert_file: /etc/tls-config/tls.crt
-              key_file: /etc/tls-config/tls.key
+              cert_file: /headless-tls/tls.crt
+              key_file: /headless-tls/tls.key
       otlp/auth:
         protocols:
           grpc:
