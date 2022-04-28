@@ -27,6 +27,7 @@ spec:
       cpu: 50m
       memory: 50Mi
   config: |
+    # Multi-cluster client gateway configuration
     extensions:
       memory_ballast:
         size_in_percentage: 30
@@ -43,7 +44,7 @@ spec:
         actions:
           - key: k8s.cluster.name
             action: insert
-            value: SomeClientClusterName
+            value: SomeClientCluster
       batch:
       memory_limiter:
         check_interval: 1s
@@ -53,7 +54,7 @@ spec:
       otlp:
         endpoint: otlp.apps.observability-d.p3ao.p1.openshiftapps.com:443
         tls:
-          ca_file: otlp-ca/ca.crt
+          ca_file: /otlp-ca/ca.crt
         headers:
           Authorization: "Basic Ym9iOmFiYzEyMw=="  # bob
           # Authorization: "Basic c3RlbGxhOmRlZjQ1Ng=="  # stella

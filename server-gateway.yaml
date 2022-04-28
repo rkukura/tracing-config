@@ -40,6 +40,7 @@ spec:
       memory: 50Mi
   image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.44.0
   config: |
+    # Multi-cluster server gateway configuration
     extensions:
       basicauth:
         htpasswd:
@@ -68,7 +69,7 @@ spec:
         actions:
           - key: k8s.cluster.name
             action: insert
-            value: MyServerClusterName
+            value: ServerCluster
       attributes/auth:
         actions:
           - key: telemetry_client_id
