@@ -1,0 +1,59 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: gateway
+  namespace: tracing-system
+spec:
+  mode: deployment
+  volumeMounts:
+  - name: cabundle-volume
+    mountPath: /cabundle
+    readonly: true
+  - name: headless-tls-volume
+    mountPath: /headless-tls
+    readonly: true
+  volumes:
+  - name: cabundle-volume
+    configMap:
+      name: openshift-service-ca.crt
+  - name: headless-tls-volume
+    secret:
+      secretName: gateway-collector-headless-tls
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+  config: |
+    # Standalone gateway configuration
+    extensions:
+      memory_ballast:
+        size_in_percentage: 30
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+            tls:
+              cert_file: /headless-tls/tls.crt
+              key_file: /headless-tls/tls.key
+    processors:
+      batch:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+    exporters:
+      jaeger:
+        endpoint: jaeger-collector-headless.tracing-system.svc:14250
+        tls:
+          ca_file: /cabundle/service-ca.crt
+    service:
+      extensions: [memory_ballast]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [jaeger]

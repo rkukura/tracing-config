@@ -1,10 +1,9 @@
 SYSTEM_NS = tracing-system
 APP_NS ?= traced-apps
 
-.PHONY: client-gateway
-client-gateway: namespace
-	oc create configmap -n tracing-system gateway-collector-otlp-ca --from-file=otlp-cert/ca.crt 2>&1 | grep -v "already exists" || true
-	oc apply -f client-gateway.yaml
+.PHONY: standalne-gateway
+standalone-gateway: jaeger
+	oc apply -f standalone-gateway.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
@@ -19,6 +18,13 @@ server-gateway: jaeger
 	oc create route passthrough -n $(SYSTEM_NS) --service=gateway-collector-headless --port=otlp-auth-grpc --hostname=otlp.apps.observability-d.p3ao.p1.openshiftapps.com
 	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/balance=random
 	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/disable_cookies=true
+
+.PHONY: client-gateway
+client-gateway: namespace
+	oc create configmap -n tracing-system gateway-collector-otlp-ca --from-file=otlp-cert/ca.crt 2>&1 | grep -v "already exists" || true
+	oc apply -f client-gateway.yaml
+	sleep 5
+	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
 .PHONY: jaeger
 jaeger: namespace
