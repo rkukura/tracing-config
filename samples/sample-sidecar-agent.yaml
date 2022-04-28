@@ -1,0 +1,67 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleYAMLSample
+metadata:
+  name: rhosdt-sample-sidecar-agent
+spec:
+  description: |
+    An example RHOSDT sidecar agent collector configuration
+  targetResource:
+    apiVersion: opentelemetry.io/v1alpha1
+    kind: OpenTelemetryCollector
+  title: Sidecar Agent
+  yaml: |
+    apiVersion: opentelemetry.io/v1alpha1
+    kind: OpenTelemetryCollector
+    metadata:
+      name: sidecar-agent
+    spec:
+      mode: sidecar
+      volumeMounts:
+      - name: cabundle-volume
+        mountPath: /cabundle
+        readonly: true
+      volumes:
+      - name: cabundle-volume
+        configMap:
+          name: openshift-service-ca.crt
+      resources:
+        limits:
+          cpu: 50m
+          memory: 100Mi
+        requests:
+          cpu: 25m
+          memory: 25Mi
+      config: |
+        # Sidecar agent configuration
+        extensions:
+          memory_ballast:
+            size_in_percentage: 30
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+              http:
+          jaeger:
+            protocols:
+              grpc:
+              thrift_binary:
+              thrift_compact:
+              thrift_http:
+        processors:
+          batch:
+          memory_limiter:
+            check_interval: 1s
+            limit_percentage: 80
+            spike_limit_percentage: 25
+        exporters:
+          otlp:
+            endpoint: gateway-collector-headless.tracing-system.svc:4317
+            tls:
+              ca_file: /cabundle/service-ca.crt
+        service:
+          extensions: [memory_ballast]
+          pipelines:
+            traces:
+              receivers: [otlp, jaeger]
+              processors: [memory_limiter, batch]
+              exporters: [otlp]

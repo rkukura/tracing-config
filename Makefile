@@ -57,3 +57,7 @@ otlp-cert:
 clean:
 	oc delete project --ignore-not-found=true $(SYSTEM_NS) 2>&1 | grep -v "forbidden" || true
 	oc delete project --ignore-not-found=true $(APP_NS) 2>&1 | grep -v "forbidden" || true
+
+.PHONY: samples
+samples:
+	oc apply -f samples

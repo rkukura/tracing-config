@@ -1,0 +1,111 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleYAMLSample
+metadata:
+  name: rhosdt-sample-server-gateway
+spec:
+  description: |
+    An example RHOSDT multi-cluster server gateway collector configuration
+  targetResource:
+    apiVersion: opentelemetry.io/v1alpha1
+    kind: OpenTelemetryCollector
+  title: MultiCluster Server Gateway
+  yaml: |
+    apiVersion: opentelemetry.io/v1alpha1
+    kind: OpenTelemetryCollector
+    metadata:
+      name: gateway
+      namespace: tracing-system
+    spec:
+      mode: deployment
+      volumeMounts:
+      - name: cabundle-volume
+        mountPath: /cabundle
+        readonly: true
+      - name: headless-tls-volume
+        mountPath: /headless-tls
+        readonly: true
+      - name: basicauth-volume
+        mountPath: /basicauth
+        readonly: true
+      - name: otlp-cert-volume
+        mountPath: /otlp-cert
+        readonly: true
+      volumes:
+      - name: cabundle-volume
+        configMap:
+          name: openshift-service-ca.crt
+      - name: headless-tls-volume
+        secret:
+          secretName: gateway-collector-headless-tls
+      - name: basicauth-volume
+        secret:
+          secretName: gateway-collector-basicauth
+      - name: otlp-cert-volume
+        secret:
+          secretName: gateway-collector-otlp-cert
+      resources:
+        limits:
+          cpu: 100m
+          memory: 200Mi
+        requests:
+          cpu: 50m
+          memory: 50Mi
+      image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.44.0
+      config: |
+        # Multi-cluster server gateway configuration
+        extensions:
+          basicauth:
+            htpasswd:
+              file: /basicauth/htpasswd
+          memory_ballast:
+            size_in_percentage: 30
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:4317
+                tls:
+                  cert_file: /headless-tls/tls.crt
+                  key_file: /headless-tls/tls.key
+          otlp/auth:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:44317
+                tls:
+                  cert_file: /otlp-cert/tls.crt
+                  key_file: /otlp-cert/tls.key
+                auth:
+                  authenticator: basicauth
+        processors:
+          attributes:
+            actions:
+              - key: k8s.cluster.name
+                action: insert
+                value: "<server-cluster-name>"
+          attributes/auth:
+            actions:
+              - key: telemetry_client_id
+                action: upsert
+                # from_context: auth.username
+                value: SomeUsername  # temporary
+          batch:
+          memory_limiter:
+            check_interval: 1s
+            limit_percentage: 80
+            spike_limit_percentage: 25
+        exporters:
+          jaeger:
+            endpoint: jaeger-collector-headless.tracing-system.svc:14250
+            tls:
+              ca_file: /cabundle/service-ca.crt
+        service:
+          extensions: [memory_ballast, basicauth]
+          pipelines:
+            traces:
+              receivers: [otlp]
+              processors: [memory_limiter, attributes, batch]
+              exporters: [jaeger]
+            traces/auth:
+              receivers: [otlp/auth]
+              processors: [memory_limiter, attributes/auth, batch]
+              exporters: [jaeger]
