@@ -6,9 +6,6 @@ metadata:
 spec:
   mode: deployment
   volumeMounts:
-  - name: cabundle-volume
-    mountPath: /etc/pki/ca-trust/source/service-ca
-    readonly: true
   - name: tls-config-volume
     mountPath: /etc/tls-config
     readonly: true
@@ -16,9 +13,6 @@ spec:
     mountPath: /etc/remote-tls-config
     readonly: true
   volumes:
-  - name: cabundle-volume
-    configMap:
-      name: openshift-service-ca.crt
   - name: tls-config-volume
     secret:
       secretName: gateway-collector-headless-tls

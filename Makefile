@@ -9,7 +9,7 @@ client-gateway: namespace
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
 
 .PHONY: server-gateway
-server-gateway: jaeger otlp-htpasswd-secret otlp-cert-secret
+server-gateway: jaeger htpasswd-secret otlp-cert-secret
 	oc apply -f server-gateway.yaml
 	sleep 5
 	oc annotate -n $(SYSTEM_NS) --overwrite=true service/gateway-collector-headless service.beta.openshift.io/serving-cert-secret-name=gateway-collector-headless-tls
@@ -18,10 +18,10 @@ server-gateway: jaeger otlp-htpasswd-secret otlp-cert-secret
 	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/balance=random
 	oc annotate -n $(SYSTEM_NS) --overwrite=true  routes/gateway-collector-headless haproxy.router.openshift.io/disable_cookies=true
 
-.PHONY: otlp-htpasswd-secret
-otlp-htpasswd-secret:
+.PHONY: htpasswd-secret
+htpasswd-secret:
 	# Use kubernetes.io/basic-auth type?
-	oc create secret generic -n tracing-system otlp-htpasswd --from-file=otlp-htpasswd 2>&1 | grep -v "already exists" || true
+	oc create secret generic -n tracing-system gateway-collector-basicauth --from-file=htpasswd 2>&1 | grep -v "already exists" || true
 
 .PHONY: otlp-cert-secret
 otlp-cert-secret:
